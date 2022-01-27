@@ -13,6 +13,15 @@ import {
   Field,
 } from 'formik';
 
+import styled from 'styled-components';
+
+const ErrorWrapper = styled.span`
+  display: flex;
+  clear: both;
+  color: red;
+  padding: 5px;
+`;
+
 const baseUrl = 'http://127.0.0.1:9090';
 
 function useAuthors() {
@@ -135,7 +144,7 @@ export function FormBook() {
               <label htmlFor='title'>Título</label>
               <Field type="text" name="title" placeholder="Título do Livro" disabled={isSubmitting} />
             </div>
-            {errors.title && touched.title && <span>{errors.title}</span>}
+            {errors.title && touched.title && <ErrorWrapper>{errors.title}</ErrorWrapper>}
 
             <div>
               <label htmlFor='author'>Autores</label>
@@ -146,7 +155,7 @@ export function FormBook() {
                 })}
               </Field>
             </div>
-            {errors.author && touched.author && <span>{errors.author}</span>}
+            {errors.author && touched.author && <ErrorWrapper>{errors.author}</ErrorWrapper>}
 
             <div>
               <label htmlFor='editora'>Editora</label>
@@ -157,7 +166,7 @@ export function FormBook() {
                 })}
               </Field>
             </div>
-            {errors.editora && touched.editora && <span>{errors.editora}</span>}
+            {errors.editora && touched.editora && <ErrorWrapper>{errors.editora}</ErrorWrapper>}
 
             <button type="submit" disabled={isSubmitting}>Atualizar</button>
           </Form>
