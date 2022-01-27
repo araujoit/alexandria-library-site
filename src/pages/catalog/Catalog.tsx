@@ -1,14 +1,11 @@
-import { Menu } from "../Menu";
+import { Menu } from "../../Menu";
 import styled from 'styled-components';
 
 import {
-  useQuery,
-  useMutation,
-  useQueryClient,
   QueryClient,
   QueryClientProvider,
 } from 'react-query'
-import { Books } from "./Books";
+import { Books } from "./books/Books";
 
 // Create a client
 const queryClient = new QueryClient({

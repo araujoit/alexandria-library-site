@@ -6,7 +6,7 @@ import {
 import { About } from "./pages/About";
 
 import { Cart } from "./pages/Cart";
-import { Catalog } from "./pages/Catalog";
+import { Catalog } from "./pages/catalog/Catalog";
 import { Home } from "./pages/Home";
 
 export function AppRoutes() {
