@@ -4,11 +4,14 @@ import {
   useQueryClient,
 } from 'react-query'
 
-import { FormBookProps } from "./interfaces";
-
-import { Author, Editora, Book } from '../../../interfaces'
+import { Author, Editora } from '../../../interfaces'
 
 import { toast } from 'react-toastify';
+import {
+  Formik,
+  Form,
+  Field,
+} from 'formik';
 
 const baseUrl = 'http://127.0.0.1:9090';
 
@@ -42,7 +45,7 @@ function useEditoras() {
   })
 }
 
-const requestUpdateBook = async (bookToUpdate: Book) => {
+const requestUpdateBook = async (bookToUpdate: FormBookProps) => {
   const response = await fetch(`${baseUrl}/api/book`, {
     method: 'PUT',
     mode: 'cors',
@@ -59,7 +62,21 @@ const requestUpdateBook = async (bookToUpdate: Book) => {
   return await response.json();
 };
 
-export function FormBook(bookProps: FormBookProps) {
+interface FormBookProps {
+  id?: number;
+  title?: string;
+  author?: number[];
+  editora?: number;
+  lote?: string;
+}
+
+interface FormBookMessages {
+  title?: string,
+  author?: string,
+  editora?: string
+}
+
+export function FormBook() {
   const queryClient = useQueryClient()
 
   const updateBook = useMutation(requestUpdateBook, {
@@ -78,154 +95,75 @@ export function FormBook(bookProps: FormBookProps) {
     toast("Erro atualizando livro!")
   }
 
-  const handleClearBookState = () => {
-    const aBook: Book = {
-      title: ''
-    };
-    bookProps.setBook(aBook);
-  }
-
-  const handleSubmit = (event: any) => {
-    event.preventDefault()
-
-    if (bookProps.book) {
-      updateBook.mutate(bookProps.book)
-    }
-  }
-
   return (
     <>
-      <div style={{
-        border: '1px solid gray',
-        padding: '1em'
-      }}>
-        <div>Adicionar Livro:</div>
-        <form
-          style={{
-            display: "flex",
-            flexDirection: 'column'
-          }}
-          onSubmit={handleSubmit}
-        >
-          {bookProps.book ?
-            <>
-              <label htmlFor="title" style={{
-                margin: '5px'
-              }}>
-                Id
-                <span> {bookProps.book.id}</span>
-              </label>
-            </>
-            : ''}
+      <Formik
+        initialValues={{
+          title: '',
+          author: [],
+          editora: 0
+        }}
+        validate={values => {
+          const errors: FormBookMessages = {};
 
-          <>
-            <label htmlFor="title" style={{
-              margin: '5px'
-            }}>
-              Título
-              <input
-                name="title"
-                type="text"
-                maxLength={40}
-                style={{
-                  padding: '5px 0px'
-                }}
-                value={bookProps.book ? bookProps.book.title : ''}
-                onChange={(event) => {
-                  const newBook: Book = {
-                    id: bookProps.book?.id,
-                    title: event.currentTarget.value,
-                    author: bookProps.book?.author,
-                    editora: bookProps.book?.editora,
-                    lote: bookProps.book?.lote
-                  }
-                  bookProps.setBook(newBook)
-                }}
-                required
-              />
-            </label>
-          </>
+          if (!values.title) {
+            errors.title = 'Título é obrigatório';
+          }
 
-          <>
-            <label htmlFor="author" style={{
-              margin: '5px'
-            }}>
-              Author
-              <select
-                name="author"
-                id="author"
-                onChange={(event) => {
-                  const newAuthor: Author = {
-                    id: parseInt(event.currentTarget.value)
-                  }
-                  const newBook: Book = {
-                    id: bookProps.book?.id,
-                    title: bookProps.book?.title,
-                    author: [newAuthor],
-                    editora: bookProps.book?.editora,
-                    lote: bookProps.book?.lote
-                  }
-                  bookProps.setBook(newBook)
-                }}
-                value={bookProps.book ? bookProps.book.author ? bookProps.book.author[0] ? bookProps.book.author[0].id : '' : '' : ''}
-                style={{
-                  padding: '5px 0px'
-                }}
-              >
-                <option value="0"></option>
-                {autores.data ? autores.data.map(author => {
-                  return <option value={author.id}>{author.name}</option>
-                }) : ''}
-              </select>
-            </label>
-          </>
+          if (values.author.length <= 0) {
+            errors.author = 'Selecione ao menos um author';
+          }
 
-          <>
-            <label htmlFor="editora">
-              Editora
-              <select
-                name="editora"
-                id="editora"
-                onChange={(event) => {
-                  const newEditora: Editora = {
-                    id: parseInt(event.currentTarget.value)
-                  }
-                  const newBook: Book = {
-                    id: bookProps.book?.id,
-                    title: bookProps.book?.title,
-                    author: bookProps.book?.author,
-                    editora: newEditora,
-                    lote: bookProps.book?.lote
-                  }
-                  bookProps.setBook(newBook)
-                }}
-                value={
-                  bookProps.book
-                    ? bookProps.book.editora
-                      ? bookProps.book.editora.id
-                      : ''
-                    : ''
-                }
-                style={{
-                  padding: '5px 0px'
-                }}
-              >
-                <option value="0"></option>
-                {editoras.data ? editoras.data.map(editora => {
-                  return <option value={editora.id}>{editora.razaoSocial}</option>
-                }) : ''}
-              </select>
-            </label>
-          </>
+          if (values.editora <= 0) {
+            errors.editora = 'Escolha uma editora';
+          }
 
-          <div style={{
-            display: "flex"
-          }}>
-            <button type="submit">Adicionar/Atualizar</button>
-            <button type="button" onClick={handleClearBookState}>Limpar</button>
-          </div>
-        </form>
-      </div>
+          return errors;
+        }}
+        onSubmit={(values: FormBookProps, { setSubmitting }) => {
+          updateBook.mutate(values)
+          setSubmitting(false);
+        }}
+      >
+        {({
+          errors,
+          touched,
+          isSubmitting,
+        }) => (
+          <Form>
+            <div>
+              <label htmlFor='title'>Título</label>
+              <Field type="text" name="title" placeholder="Título do Livro" disabled={isSubmitting} />
+            </div>
+            {errors.title && touched.title && <span>{errors.title}</span>}
+
+            <div>
+              <label htmlFor='author'>Autores</label>
+              <Field as="select" name="author" placeholder="Autores do Livro" multiple={true} disabled={isSubmitting}>
+                <option key={0} value={0} disabled>-- Selecione um Autor --</option>
+                {autores.data && autores.data.map(author => {
+                  return <option key={author.id} value={author.id}>{author.name}</option>
+                })}
+              </Field>
+            </div>
+            {errors.author && touched.author && <span>{errors.author}</span>}
+
+            <div>
+              <label htmlFor='editora'>Editora</label>
+              <Field as="select" name="editora" placeholder="Editora" disabled={isSubmitting}>
+                <option key={0} value={0} disabled>-- Selecione uma Editora --</option>
+                {editoras.data && editoras.data.map(editora => {
+                  return <option key={editora.id} value={editora.id}>{editora.razaoSocial}</option>
+                })}
+              </Field>
+            </div>
+            {errors.editora && touched.editora && <span>{errors.editora}</span>}
+
+            <button type="submit" disabled={isSubmitting}>Atualizar</button>
+          </Form>
+        )}
+
+      </Formik>
     </>
   )
 }

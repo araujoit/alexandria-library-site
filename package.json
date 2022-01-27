@@ -9,6 +9,7 @@
   "dependencies": {
     "@radix-ui/react-label": "^0.1.4",
     "@radix-ui/react-popover": "0.1.4",
+    "formik": "^2.2.9",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "react-query": "^3.34.12",
