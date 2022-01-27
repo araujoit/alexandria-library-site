@@ -1,5 +1,6 @@
 import {
   useMutation,
+  useQuery,
   useQueryClient,
 } from 'react-query'
 
@@ -7,7 +8,39 @@ import { FormBookProps } from "./interfaces";
 
 import { Author, Editora, Book } from '../../../interfaces'
 
+import { toast } from 'react-toastify';
+
 const baseUrl = 'http://127.0.0.1:9090';
+
+function useAuthors() {
+  return useQuery<Author[], Error>('authors', async () => {
+    const response = await fetch(`${baseUrl}/api/author`);
+
+    if (!response.ok) {
+      throw new Error('Problema obtendo autores')
+    }
+
+    return await response.json();
+  }, {
+    //onSuccess: () => toast('Autores carregadas com sucesso'),
+    onError: () => toast('Falha ao carregar autores')
+  })
+}
+
+function useEditoras() {
+  return useQuery<Editora[], Error>('editoras', async () => {
+    const response = await fetch(`${baseUrl}/api/editora`)
+
+    if (!response.ok) {
+      throw new Error('Problema obtendo editoras')
+    }
+
+    return await response.json()
+  }, {
+    //onSuccess: () => toast('Editoras carregadas com sucesso'),
+    onError: () => toast('Falha ao carregar editoras')
+  })
+}
 
 const requestUpdateBook = async (bookToUpdate: Book) => {
   const response = await fetch(`${baseUrl}/api/book`, {
@@ -27,20 +60,23 @@ const requestUpdateBook = async (bookToUpdate: Book) => {
 };
 
 export function FormBook(bookProps: FormBookProps) {
-  const book = bookProps.book;
-
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const updateBook = useMutation(requestUpdateBook, {
-    onSuccess: () => {
-      // refetch book list for our Catalog
-      queryClient.invalidateQueries(['books'])
-    }
-  });
+    // refetch book list for our Catalog
+    onSuccess: () => queryClient.invalidateQueries(['books'])
+  })
 
-  if (updateBook.isLoading) return <span>Atualizando livro...</span>
+  const autores = useAuthors()
+  const editoras = useEditoras()
 
-  if (updateBook.isError) return <span>Erro atualizando livro!</span>
+  if (updateBook.isSuccess) {
+    toast("Livro atualizado!")
+  }
+
+  if (updateBook.isError) {
+    toast("Erro atualizando livro!")
+  }
 
   const handleClearBookState = () => {
     const aBook: Book = {
@@ -49,30 +85,11 @@ export function FormBook(bookProps: FormBookProps) {
     bookProps.setBook(aBook);
   }
 
-  const handleTesteBookState = () => {
-    const aAuthor: Author = {
-      id: 7
-    }
-
-    const aBook: Book = {
-      id: 18,
-      title: 'Um testasso',
-      editora: {
-        id: 7
-      },
-      author: [aAuthor]
-    };
-
-    bookProps.setBook(aBook);
-  }
-
-  const handleSubmit = (event : any) => {
+  const handleSubmit = (event: any) => {
     event.preventDefault()
 
-    console.log('logStateBook:', book)
-
-    if (book) {
-      updateBook.mutate(book)
+    if (bookProps.book) {
+      updateBook.mutate(bookProps.book)
     }
   }
 
@@ -90,13 +107,13 @@ export function FormBook(bookProps: FormBookProps) {
           }}
           onSubmit={handleSubmit}
         >
-          {book ?
+          {bookProps.book ?
             <>
               <label htmlFor="title" style={{
                 margin: '5px'
               }}>
                 Id
-                <span> {book.id}</span>
+                <span> {bookProps.book.id}</span>
               </label>
             </>
             : ''}
@@ -113,14 +130,14 @@ export function FormBook(bookProps: FormBookProps) {
                 style={{
                   padding: '5px 0px'
                 }}
-                value={book ? book.title : ''}
+                value={bookProps.book ? bookProps.book.title : ''}
                 onChange={(event) => {
                   const newBook: Book = {
-                    id: book?.id,
+                    id: bookProps.book?.id,
                     title: event.currentTarget.value,
-                    author: book?.author,
-                    editora: book?.editora,
-                    lote: book?.lote
+                    author: bookProps.book?.author,
+                    editora: bookProps.book?.editora,
+                    lote: bookProps.book?.lote
                   }
                   bookProps.setBook(newBook)
                 }}
@@ -142,26 +159,23 @@ export function FormBook(bookProps: FormBookProps) {
                     id: parseInt(event.currentTarget.value)
                   }
                   const newBook: Book = {
-                    id: book?.id,
-                    title: book?.title,
+                    id: bookProps.book?.id,
+                    title: bookProps.book?.title,
                     author: [newAuthor],
-                    editora: book?.editora,
-                    lote: book?.lote
+                    editora: bookProps.book?.editora,
+                    lote: bookProps.book?.lote
                   }
                   bookProps.setBook(newBook)
                 }}
-                value={book ? book.author ? book.author[0] ? book.author[0].id : '' : '' : ''}
+                value={bookProps.book ? bookProps.book.author ? bookProps.book.author[0] ? bookProps.book.author[0].id : '' : '' : ''}
                 style={{
                   padding: '5px 0px'
                 }}
               >
                 <option value="0"></option>
-                <option value="3">Paulão</option>
-                <option value="5">O Amado</option>
-                <option value="6">Carlão</option>
-                <option value="7">Asimov</option>
-                <option value="8">seiláoqueéisso</option>
-                <option value="9">Andrew</option>
+                {autores.data ? autores.data.map(author => {
+                  return <option value={author.id}>{author.name}</option>
+                }) : ''}
               </select>
             </label>
           </>
@@ -177,23 +191,29 @@ export function FormBook(bookProps: FormBookProps) {
                     id: parseInt(event.currentTarget.value)
                   }
                   const newBook: Book = {
-                    id: book?.id,
-                    title: book?.title,
-                    author: book?.author,
+                    id: bookProps.book?.id,
+                    title: bookProps.book?.title,
+                    author: bookProps.book?.author,
                     editora: newEditora,
-                    lote: book?.lote
+                    lote: bookProps.book?.lote
                   }
                   bookProps.setBook(newBook)
                 }}
-                value={book ? book.editora ? book.editora.id : '' : ''}
+                value={
+                  bookProps.book
+                    ? bookProps.book.editora
+                      ? bookProps.book.editora.id
+                      : ''
+                    : ''
+                }
                 style={{
                   padding: '5px 0px'
                 }}
               >
-                <option value="4">Saraiva</option>
-                <option value="5">Livraria Cultura</option>
-                <option value="6">Objetiva</option>
-                <option value="7">Ediouro</option>
+                <option value="0"></option>
+                {editoras.data ? editoras.data.map(editora => {
+                  return <option value={editora.id}>{editora.razaoSocial}</option>
+                }) : ''}
               </select>
             </label>
           </>
@@ -202,8 +222,7 @@ export function FormBook(bookProps: FormBookProps) {
             display: "flex"
           }}>
             <button type="submit">Adicionar/Atualizar</button>
-            <button type="button" onClick={handleTesteBookState}>Teste Book State</button>
-            <button type="button" onClick={handleClearBookState}>Clear Book State</button>
+            <button type="button" onClick={handleClearBookState}>Limpar</button>
           </div>
         </form>
       </div>

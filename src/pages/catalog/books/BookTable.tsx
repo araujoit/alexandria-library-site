@@ -115,7 +115,9 @@ export function BookTable(bookProps: FormBookProps) {
                   <td>{book.title}</td>
                   <td>{book.author ? book.author[0] ? book.author[0].name : '' : ''}</td>
                   <td>{book.editora ? book.editora.razaoSocial : ''}</td>
-                  <td><DeleteBook book={book} /></td>
+                  <td style={{
+                    textAlign: 'center'
+                  }}><DeleteBook book={book} /></td>
                 </tr>
               )
             }) : ''}
