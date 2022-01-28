@@ -28,3 +28,17 @@ export interface Book {
   editora?: Editora;
   lote?: string;
 }
+
+export interface FormBookProps {
+  id?: number;
+  title?: string;
+  author?: number[];
+  editora?: number;
+  lote?: string;
+}
+
+export interface FormBookMessages {
+  title?: string,
+  author?: string,
+  editora?: string
+}

@@ -4,12 +4,13 @@ import {
   useQueryClient,
 } from 'react-query'
 
-import { Author, Editora } from '../../../interfaces'
+import { Author, Editora, FormBookMessages, FormBookProps } from '../../../interfaces'
 
 import { toast } from 'react-toastify';
 import {
   Formik,
   Form,
+  FormikHelpers,
 } from 'formik';
 
 import Button from '@mui/material/Button';
@@ -72,28 +73,18 @@ const requestUpdateBook = async (bookToUpdate: FormBookProps) => {
   return await response.json();
 };
 
-interface FormBookProps {
-  id?: number;
-  title?: string;
-  author?: number[];
-  editora?: number;
-  lote?: string;
-}
-
-interface FormBookMessages {
-  title?: string,
-  author?: string,
-  editora?: string
-}
-
 export function FormBook() {
   const queryClient = useQueryClient()
 
   const updateBook = useMutation(requestUpdateBook, {
     // refetch book list for our Catalog
-    onSuccess: () => {
-      queryClient.invalidateQueries(['books'])
-      toast.success("Livro atualizado!")
+    onSuccess: ({ status }: any) => {
+      if (status === 200) {
+        queryClient.invalidateQueries(['books'])
+        toast.success("Livro atualizado!")
+      } else {
+        toast.error("Ocorreu alguma falha ao tentar atualizar Livro!")
+      }
     }
   })
 
@@ -109,16 +100,16 @@ export function FormBook() {
       initialValues={{
         title: '',
         author: [],
-        editora: ''
+        editora: undefined
       }}
-      validate={values => {
+      validate={(values: FormBookProps) => {
         const errors: FormBookMessages = {};
 
         if (!values.title) {
           errors.title = 'Título é obrigatório';
         }
 
-        if (values.author.length <= 0) {
+        if (values.author!.length <= 0) {
           errors.author = 'Selecione ao menos um author';
         }
 
@@ -128,7 +119,7 @@ export function FormBook() {
 
         return errors;
       }}
-      onSubmit={(values: FormBookProps, { setSubmitting }) => {
+      onSubmit={(values: FormBookProps, { setSubmitting }: FormikHelpers<FormBookProps>) => {
         updateBook.mutate(values)
         setSubmitting(false);
       }}
