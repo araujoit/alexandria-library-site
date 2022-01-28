@@ -10,17 +10,18 @@ import { toast } from 'react-toastify';
 import {
   Formik,
   Form,
-  Field,
 } from 'formik';
 
-import styled from 'styled-components';
+import Button from '@mui/material/Button';
 
-const ErrorWrapper = styled.span`
-  display: flex;
-  clear: both;
-  color: red;
-  padding: 5px;
-`;
+import Box from '@mui/material/Box';
+import InputLabel from '@mui/material/InputLabel';
+import TextField from '@mui/material/TextField';
+import MenuItem from '@mui/material/MenuItem';
+import FormControl from '@mui/material/FormControl';
+import Select from '@mui/material/Select';
+import Grid from '@mui/material/Grid';
+import { FormLabel } from '@mui/material';
 
 const baseUrl = 'http://127.0.0.1:9090';
 
@@ -90,89 +91,164 @@ export function FormBook() {
 
   const updateBook = useMutation(requestUpdateBook, {
     // refetch book list for our Catalog
-    onSuccess: () => queryClient.invalidateQueries(['books'])
+    onSuccess: () => {
+      queryClient.invalidateQueries(['books'])
+      toast.success("Livro atualizado!")
+    }
   })
 
   const autores = useAuthors()
   const editoras = useEditoras()
 
-  if (updateBook.isSuccess) {
-    toast("Livro atualizado!")
-  }
-
   if (updateBook.isError) {
-    toast("Erro atualizando livro!")
+    toast.warn("Erro atualizando livro!")
   }
 
   return (
-    <>
-      <Formik
-        initialValues={{
-          title: '',
-          author: [],
-          editora: 0
-        }}
-        validate={values => {
-          const errors: FormBookMessages = {};
+    <Formik
+      initialValues={{
+        title: '',
+        author: [],
+        editora: ''
+      }}
+      validate={values => {
+        const errors: FormBookMessages = {};
 
-          if (!values.title) {
-            errors.title = 'Título é obrigatório';
-          }
+        if (!values.title) {
+          errors.title = 'Título é obrigatório';
+        }
 
-          if (values.author.length <= 0) {
-            errors.author = 'Selecione ao menos um author';
-          }
+        if (values.author.length <= 0) {
+          errors.author = 'Selecione ao menos um author';
+        }
 
-          if (values.editora <= 0) {
-            errors.editora = 'Escolha uma editora';
-          }
+        if (!values.editora) {
+          errors.editora = 'Escolha uma editora';
+        }
 
-          return errors;
-        }}
-        onSubmit={(values: FormBookProps, { setSubmitting }) => {
-          updateBook.mutate(values)
-          setSubmitting(false);
-        }}
-      >
-        {({
-          errors,
-          touched,
-          isSubmitting,
-        }) => (
-          <Form>
-            <div>
-              <label htmlFor='title'>Título</label>
-              <Field type="text" name="title" placeholder="Título do Livro" disabled={isSubmitting} />
-            </div>
-            {errors.title && touched.title && <ErrorWrapper>{errors.title}</ErrorWrapper>}
+        return errors;
+      }}
+      onSubmit={(values: FormBookProps, { setSubmitting }) => {
+        updateBook.mutate(values)
+        setSubmitting(false);
+      }}
+    >
+      {({
+        errors,
+        touched,
+        isSubmitting,
+        handleChange,
+        handleBlur,
+        values,
+        handleReset,
+      }) => (
+        <Form>
+          <Grid item p={2}>
+            <FormControl fullWidth>
+              <TextField
+                label="Título"
+                name="title"
+                id="title"
+                placeholder="Título do Livro"
+                onChange={handleChange}
+                onBlur={handleBlur}
+                value={values.title}
+                disabled={isSubmitting}
+              />
+              <FormLabel error={true}>
+                {errors.title && touched.title && errors.title}
+              </FormLabel>
+            </FormControl>
+          </Grid>
 
-            <div>
-              <label htmlFor='author'>Autores</label>
-              <Field as="select" name="author" placeholder="Autores do Livro" multiple={true} disabled={isSubmitting}>
-                <option key={0} value={0} disabled>-- Selecione um Autor --</option>
-                {autores.data && autores.data.map(author => {
-                  return <option key={author.id} value={author.id}>{author.name}</option>
-                })}
-              </Field>
-            </div>
-            {errors.author && touched.author && <ErrorWrapper>{errors.author}</ErrorWrapper>}
+          <Grid item p={2}>
+            <Box>
+              <FormControl fullWidth>
+                <InputLabel id="author-label">Autores do Livro</InputLabel>
 
-            <div>
-              <label htmlFor='editora'>Editora</label>
-              <Field as="select" name="editora" placeholder="Editora" disabled={isSubmitting}>
-                <option key={0} value={0} disabled>-- Selecione uma Editora --</option>
-                {editoras.data && editoras.data.map(editora => {
-                  return <option key={editora.id} value={editora.id}>{editora.razaoSocial}</option>
-                })}
-              </Field>
-            </div>
-            {errors.editora && touched.editora && <ErrorWrapper>{errors.editora}</ErrorWrapper>}
+                <Select
+                  labelId="author-label"
+                  id="author-select"
+                  label="Editora"
+                  name="author"
+                  placeholder="Autores"
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  value={values.author}
+                  disabled={isSubmitting}
+                  multiple={true}
+                >
+                  {autores.data && autores.data.map(author => {
+                    return <MenuItem key={author.id} value={author.id}>{author.name}</MenuItem>
+                  })}
+                </Select>
 
-            <button type="submit" disabled={isSubmitting}>Atualizar</button>
-          </Form>
-        )}
+                <FormLabel error={true}>
+                  {errors.author && touched.author && errors.author}
+                </FormLabel>
+              </FormControl>
+            </Box>
+          </Grid>
 
-      </Formik>
-    </>
+          <Grid item p={2}>
+            <Box>
+              <FormControl fullWidth>
+                <InputLabel id="editora-label">Editora</InputLabel>
+
+                <Select
+                  labelId="editora-label"
+                  id="editora-select"
+                  label="Editora"
+                  name="editora"
+                  placeholder="Editora"
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  value={values.editora}
+                  disabled={isSubmitting}
+                >
+                  {editoras.data && editoras.data.map(editora => {
+                    //return <option key={editora.id} value={editora.id}>{editora.razaoSocial}</option>
+                    return <MenuItem key={editora.id} value={editora.id}>{editora.razaoSocial}</MenuItem>
+                  })}
+                </Select>
+
+                <FormLabel error={true}>
+                  {errors.editora && touched.editora && errors.editora}
+                </FormLabel>
+              </FormControl>
+            </Box>
+          </Grid>
+
+          <Grid item p={2}>
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              disabled={isSubmitting}
+              size="small"
+              style={{
+                margin: '2px'
+              }}
+            >
+              Atualizar
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              type="button"
+              onClick={handleReset}
+              disabled={isSubmitting}
+              size="small"
+              style={{
+                margin: '2px'
+              }}
+            >
+              Resetar
+            </Button>
+          </Grid>
+        </Form>
+      )}
+
+    </Formik>
   )
 }

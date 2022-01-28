@@ -5,7 +5,12 @@ import {
 } from 'react-query'
 
 import { Book } from '../../../interfaces'
-import { FormBookProps } from './interfaces';
+import { FormUpdateBookProps } from './interfaces';
+
+import Grid from '@mui/material/Grid';
+import Button from '@mui/material/Button';
+import { useState } from 'react';
+import { toast } from 'react-toastify';
 
 const baseUrl = 'http://127.0.0.1:9090';
 
@@ -28,7 +33,10 @@ interface BookProps {
 function DeleteBook(bookProps: BookProps) {
   const queryClient = useQueryClient();
 
+  const [disabled, setDisabled] = useState(false)
+
   const deleteBook = useMutation(async (toDelete: Book) => {
+    setDisabled(true);
     const response = await fetch(`${baseUrl}/api/book/${toDelete.id}`,
       {
         method: 'DELETE',
@@ -48,25 +56,37 @@ function DeleteBook(bookProps: BookProps) {
     onSuccess: () => {
       // refetch book list for our Catalog
       queryClient.invalidateQueries(['books'])
+      toast.success('Livro deletado!');
+    },
+    onMutate: () => {
+      // reenable buttons
+      setDisabled(false)
     }
   })
 
-  if (deleteBook.isLoading) return <span>Deletando livro...</span>
-
-  if (deleteBook.isError) return <span>Erro deletando livro!</span>
-
-  if (deleteBook.isSuccess) return <span>Livro Deletado!</span>
+  if (deleteBook.isError)  {
+    toast.warn('Erro deletando livro...');
+  }
 
   const handleDeleteBook = () => {
     deleteBook.mutate(bookProps.book)
   }
 
-  return <span onClick={handleDeleteBook} style={{
-    cursor: 'pointer'
-  }}>x</span>
+  // return <span onClick={handleDeleteBook} style={{ cursor: 'pointer' }}>x</span>
+  return (
+    <Button
+      variant='outlined'
+      size="small"
+      onClick={handleDeleteBook}
+      style={{ cursor: 'pointer' }}
+      disabled={disabled}
+    >
+      x
+    </Button>
+  )
 }
 
-export function BookTable(bookProps: FormBookProps) {
+export function BookTable(bookProps: FormUpdateBookProps) {
   // Queries - accessing the client
   const { isLoading, isError, data, error: any } = useBookData()
 
@@ -79,14 +99,13 @@ export function BookTable(bookProps: FormBookProps) {
   }
 
   return (
-    <>
+    <Grid item p={2}>
       <div style={{
         display: 'flex',
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: '#dddeee',
       }}>
-
         <table>
           <thead>
             <tr>
@@ -113,17 +132,15 @@ export function BookTable(bookProps: FormBookProps) {
                     </a>
                   </td>
                   <td>{book.title}</td>
-                  <td>{book.author ? book.author[0] ? book.author[0].name : '' : ''}</td>
+                  <td>{book.author && book.author.map(author => author.name).join(',')}</td>
                   <td>{book.editora ? book.editora.razaoSocial : ''}</td>
-                  <td style={{
-                    textAlign: 'center'
-                  }}><DeleteBook book={book} /></td>
+                  <td style={{ textAlign: 'center' }}><DeleteBook book={book} /></td>
                 </tr>
               )
             }) : ''}
           </tbody>
         </table>
       </div>
-    </>
+    </Grid>
   )
 }

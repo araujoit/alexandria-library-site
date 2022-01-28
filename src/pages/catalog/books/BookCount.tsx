@@ -18,5 +18,5 @@ export function BookCount() {
 
   if (isError) return <div>Falha ao carrega Qtd Livros</div>
 
-  return <div>Quantidade de Livros Cadastrados: {data}</div>
+  return <span>Quantidade de Livros Cadastrados: {data}</span>
 }

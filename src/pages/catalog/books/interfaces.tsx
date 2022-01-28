@@ -1,6 +1,6 @@
 import { Book } from "../../../interfaces";
 
-export interface FormBookProps {
+export interface FormUpdateBookProps {
   book: Book,
   setBook: React.Dispatch<React.SetStateAction<Book>>
 }
