@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from 'react-query'
 
-import { Author, Editora, FormBookMessages, FormBookProps } from '../../../interfaces'
+import { AuthorPageable, Book, Editora, FormBookMessages, FormBookProps } from '../../../interfaces'
 
 import { toast } from 'react-toastify';
 import {
@@ -24,41 +24,26 @@ import Select from '@mui/material/Select';
 import Grid from '@mui/material/Grid';
 import { FormLabel } from '@mui/material';
 
-const baseUrl = 'http://127.0.0.1:9090';
+const baseUrl = 'http://127.0.0.1:8080';
 
 function useAuthors() {
-  return useQuery<Author[], Error>('authors', async () => {
-    const response = await fetch(`${baseUrl}/api/author`);
+  return useQuery<AuthorPageable, Error>('authors', async () => {
+    const response = await fetch(`${baseUrl}/authors`);
 
     if (!response.ok) {
       throw new Error('Problema obtendo autores')
     }
 
-    return await response.json();
+    return response.json();
   }, {
     //onSuccess: () => toast('Autores carregadas com sucesso'),
     onError: () => toast('Falha ao carregar autores')
   })
 }
 
-function useEditoras() {
-  return useQuery<Editora[], Error>('editoras', async () => {
-    const response = await fetch(`${baseUrl}/api/editora`)
-
-    if (!response.ok) {
-      throw new Error('Problema obtendo editoras')
-    }
-
-    return await response.json()
-  }, {
-    //onSuccess: () => toast('Editoras carregadas com sucesso'),
-    onError: () => toast('Falha ao carregar editoras')
-  })
-}
-
-const requestUpdateBook = async (bookToUpdate: FormBookProps) => {
-  const response = await fetch(`${baseUrl}/api/book`, {
-    method: 'PUT',
+const requestUpdateBook = async (bookToUpdate: Book) => {
+  const response = await fetch(`${baseUrl}/books`, {
+    method: 'POST',
     mode: 'cors',
     cache: 'no-cache',
     credentials: 'same-origin',
@@ -70,7 +55,7 @@ const requestUpdateBook = async (bookToUpdate: FormBookProps) => {
     body: JSON.stringify(bookToUpdate)
   });
 
-  return await response.json();
+  return response.json();
 };
 
 export function FormBook() {
@@ -78,10 +63,10 @@ export function FormBook() {
 
   const updateBook = useMutation(requestUpdateBook, {
     // refetch book list for our Catalog
-    onSuccess: ({ status }: any) => {
-      if (status === 200) {
+    onSuccess: ({ id }: any) => {
+      if (id > 0) {
         queryClient.invalidateQueries(['books'])
-        toast.success("Livro atualizado!")
+        toast.success(`Livro com id ${id} atualizado!`)
       } else {
         toast.error("Ocorreu alguma falha ao tentar atualizar Livro!")
       }
@@ -89,7 +74,6 @@ export function FormBook() {
   })
 
   const autores = useAuthors()
-  const editoras = useEditoras()
 
   if (updateBook.isError) {
     toast.warn("Erro atualizando livro!")
@@ -99,27 +83,23 @@ export function FormBook() {
     <Formik
       initialValues={{
         title: '',
-        author: [],
-        editora: undefined
+        authors: []
       }}
-      validate={(values: FormBookProps) => {
+      validate={(values: Book) => {
         const errors: FormBookMessages = {};
 
         if (!values.title) {
           errors.title = 'Título é obrigatório';
         }
 
-        if (values.author!.length <= 0) {
-          errors.author = 'Selecione ao menos um author';
-        }
-
-        if (!values.editora) {
-          errors.editora = 'Escolha uma editora';
+        if (values.authors!.length <= 0) {
+          errors.authors = 'Selecione ao menos um author';
         }
 
         return errors;
       }}
-      onSubmit={(values: FormBookProps, { setSubmitting }: FormikHelpers<FormBookProps>) => {
+      onSubmit={(values: Book, { setSubmitting }: FormikHelpers<Book>) => {
+        console.log('values:', values)
         updateBook.mutate(values)
         setSubmitting(false);
       }}
@@ -161,50 +141,22 @@ export function FormBook() {
                   labelId="author-label"
                   id="author-select"
                   label="Editora"
-                  name="author"
+                  name="authors"
                   placeholder="Autores"
                   onChange={handleChange}
                   onBlur={handleBlur}
-                  value={values.author}
+                  value={values.authors}
                   disabled={isSubmitting}
                   multiple={true}
                 >
-                  {autores.data && autores.data.map(author => {
-                    return <MenuItem key={author.id} value={author.id}>{author.name}</MenuItem>
+                  {autores.data && autores.data.content.map(author => {
+                    // @ts-ignore author versão atual com bug no objeto, fica acusando falha ao tentar passsar objeto como valor
+                    return <MenuItem key={author.id} value={author}>{author.name}</MenuItem>
                   })}
                 </Select>
 
                 <FormLabel error={true}>
-                  {errors.author && touched.author && errors.author}
-                </FormLabel>
-              </FormControl>
-            </Box>
-          </Grid>
-
-          <Grid item p={2}>
-            <Box>
-              <FormControl fullWidth>
-                <InputLabel id="editora-label">Editora</InputLabel>
-
-                <Select
-                  labelId="editora-label"
-                  id="editora-select"
-                  label="Editora"
-                  name="editora"
-                  placeholder="Editora"
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  value={values.editora}
-                  disabled={isSubmitting}
-                >
-                  {editoras.data && editoras.data.map(editora => {
-                    //return <option key={editora.id} value={editora.id}>{editora.razaoSocial}</option>
-                    return <MenuItem key={editora.id} value={editora.id}>{editora.razaoSocial}</MenuItem>
-                  })}
-                </Select>
-
-                <FormLabel error={true}>
-                  {errors.editora && touched.editora && errors.editora}
+                  {errors.authors && touched.authors && errors.authors}
                 </FormLabel>
               </FormControl>
             </Box>

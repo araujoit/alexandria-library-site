@@ -12,17 +12,18 @@ import Button from '@mui/material/Button';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
 
-const baseUrl = 'http://127.0.0.1:9090';
+const baseUrl = 'http://127.0.0.1:8080';
 
 function useBookData() {
   return useQuery<Book[], Error>('books', async () => {
-    const response = await fetch(`${baseUrl}/api/book`);
+    const response = await fetch(`${baseUrl}/books`);
 
     if (!response.ok) {
       throw new Error('Problem fetching books');
     }
 
-    return await response.json();
+    const data = await response.json();
+    return data;
   })
 }
 
@@ -37,7 +38,7 @@ function DeleteBook(bookProps: BookProps) {
 
   const deleteBook = useMutation(async (toDelete: Book) => {
     setDisabled(true);
-    const response = await fetch(`${baseUrl}/api/book/${toDelete.id}`,
+    const response = await fetch(`${baseUrl}/books/${toDelete.id}`,
       {
         method: 'DELETE',
         mode: 'cors',
@@ -111,13 +112,12 @@ export function BookTable(bookProps: FormUpdateBookProps) {
             <tr>
               <th>Id</th>
               <th>Título</th>
-              <th>Author</th>
-              <th>Editora</th>
+              <th>Autores</th>
               <th>Remover</th>
             </tr>
           </thead>
           <tbody>
-            {data ? data.map(book => {
+            {data ? data.content.map(book => {
               return (
                 <tr key={book.id}>
                   <td>
@@ -132,8 +132,11 @@ export function BookTable(bookProps: FormUpdateBookProps) {
                     </a>
                   </td>
                   <td>{book.title}</td>
-                  <td>{book.author && book.author.map(author => author.name).join(',')}</td>
-                  <td>{book.editora ? book.editora.razaoSocial : ''}</td>
+                  <td>
+                    {book.authors && book.authors.map(author => {
+                      return author.name
+                    }).join(',')}
+                  </td>
                   <td style={{ textAlign: 'center' }}><DeleteBook book={book} /></td>
                 </tr>
               )

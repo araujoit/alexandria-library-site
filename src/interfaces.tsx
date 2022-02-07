@@ -1,3 +1,32 @@
+export interface AuthorPageable {
+  content: Author[],
+  pageable: Pageable,
+  totalPages: number,
+  totalElements: number,
+  last: boolean,
+  size: number,
+  number: number,
+  sort: Sort,
+  numberOfElements: number,
+  first: boolean,
+  empty: boolean
+}
+
+export interface Sort {
+  empty: boolean,
+  unsorted: boolean,
+  sorted: boolean
+}
+
+export interface Pageable {
+  sort: Sort,
+  offset: number,
+  pageNumber: number,
+  pageSize: number,
+  paged: boolean,
+  unpaged: boolean
+}
+
 export interface Author {
   id: number;
   name?: string;
@@ -5,40 +34,25 @@ export interface Author {
 
 export interface Editora {
   id: number;
-  razaoSocial?: string;
-  nomeFantasia?: string;
-  cnpj?: string;
-  ddiTelefone?: string;
-  dddTelefone?: string;
-  celular?: string;
-  responsavel?: string;
-  endereco?: string;
-  bairro?: string;
-  cidade?: string;
-  uf?: string;
-  cep?: string;
-  descricao?: string;
-  logo?: string;
+  corporateName?: string;
 }
 
 export interface Book {
   id?: number;
   title?: string;
-  author?: Author[];
-  editora?: Editora;
-  lote?: string;
+  authors?: Author[];
 }
 
 export interface FormBookProps {
   id?: number;
   title?: string;
-  author?: number[];
+  authors?: Author[];
   editora?: number;
   lote?: string;
 }
 
 export interface FormBookMessages {
   title?: string,
-  author?: string,
+  authors?: string,
   editora?: string
 }
