@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from 'react-query'
 
-import { Book } from '../../../interfaces'
+import { Book, BookPageable } from '../../../interfaces'
 import { FormUpdateBookProps } from './interfaces';
 
 import Grid from '@mui/material/Grid';
@@ -15,15 +15,14 @@ import { toast } from 'react-toastify';
 const baseUrl = 'http://127.0.0.1:8080';
 
 function useBookData() {
-  return useQuery<Book[], Error>('books', async () => {
+  return useQuery<BookPageable, Error>('books', async () => {
     const response = await fetch(`${baseUrl}/books`);
 
     if (!response.ok) {
       throw new Error('Problem fetching books');
     }
 
-    const data = await response.json();
-    return data;
+    return response.json();
   })
 }
 
@@ -52,7 +51,7 @@ function DeleteBook(bookProps: BookProps) {
       }
     )
 
-    return await response.status === 200
+    return response.status === 200
   }, {
     onSuccess: () => {
       // refetch book list for our Catalog
@@ -73,7 +72,6 @@ function DeleteBook(bookProps: BookProps) {
     deleteBook.mutate(bookProps.book)
   }
 
-  // return <span onClick={handleDeleteBook} style={{ cursor: 'pointer' }}>x</span>
   return (
     <Button
       variant='outlined'

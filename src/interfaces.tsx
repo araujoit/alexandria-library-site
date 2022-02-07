@@ -12,6 +12,20 @@ export interface AuthorPageable {
   empty: boolean
 }
 
+export interface BookPageable {
+  content: Book[],
+  pageable: Pageable,
+  totalPages: number,
+  totalElements: number,
+  last: boolean,
+  size: number,
+  number: number,
+  sort: Sort,
+  numberOfElements: number,
+  first: boolean,
+  empty: boolean
+}
+
 export interface Sort {
   empty: boolean,
   unsorted: boolean,
